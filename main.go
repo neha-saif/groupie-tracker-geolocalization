@@ -33,7 +33,7 @@ func main() {
 	http.HandleFunc("/", homepage)
 	http.ListenAndServe(":8080", nil)
 }
-
+//function for waitingn pagge between google maps annd result
 func mappage(w http.ResponseWriter, r *http.Request) {
     if r.Method == http.MethodPost {
 
