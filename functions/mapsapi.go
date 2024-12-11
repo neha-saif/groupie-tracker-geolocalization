@@ -17,13 +17,17 @@ type FinalGeo struct {
 func MapsApiResp(city, country string) (FinalGeo, error) {
 		baseURL := "https://nominatim.openstreetmap.org/search"
 	
+		//define
 		params := url.Values{}
+		//add place to params q is the key
 		params.Add("q", city+","+ country)
+		//add desired format of response
 		params.Add("format", "json")
 	
-		// make the URL required 
+		// make the URL required and encode commas etc betweenn params
 		fullURL := baseURL+"?"+ params.Encode()
 	
+		//request for data
 		res, err := http.Get(fullURL)
 		if err != nil {
 			return FinalGeo{}, fmt.Errorf("error sending request: %v", err)
