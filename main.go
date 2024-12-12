@@ -286,7 +286,7 @@ func result(wr http.ResponseWriter, r *http.Request) {
 	x := 1
 	d := ""
 	for location, date := range charData[i].DatesLocations {
-		d = strconv.Itoa(x) + ") " + strings.ReplaceAll(string(location), "-", ", ") + ": " + strings.Join(date, ", ")
+		d =  strings.ReplaceAll(string(strings.Title(location)), "-", ", ") + ": " + strings.Join(date, ", ")
 		d = strings.ReplaceAll(d, "_", " ")
 		cdata = append(cdata, d)
 		x++
