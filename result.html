@@ -63,10 +63,26 @@
                 </button>
 
                 <p>{{.}}</p>
+          
               </div>
               {{end}}
             </div>
             </form>
+            <div class="map-embed">
+              <h3>Map Preview</h3>
+              {{range .MapURL}}
+              <img
+                src="{{.}}"
+                referrerpolicy="no-referrer-when-downgrade"
+                width="600"
+                height="450"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
+               >
+            </img>
+            </div>
+            {{end}}
           </div>
         </div>
       </div>

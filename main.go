@@ -21,6 +21,7 @@ type Final struct {
 	AlbumYear int
 	Album1    string
 	Locations []string
+	MapURL []string
 }
 
 
@@ -228,6 +229,7 @@ func result(wr http.ResponseWriter, r *http.Request) {
 
 	char, _ := functions.LoadData("https://groupietrackers.herokuapp.com/api/artists")
 	artId := r.FormValue("artist")
+	fmt.Println("artId:",artId)
 	for _, ch := range artId {
 		if ch != 10 && ch != 13 && (ch < 32 || ch > 126) {
 			renderErrorPage(wr, 400)
@@ -248,11 +250,12 @@ func result(wr http.ResponseWriter, r *http.Request) {
 	}
 
 	iint, err := strconv.Atoi(artId)
-	if err != nil || iint <= 0 {
-		renderErrorPage(wr, 500)
-		return
-	}
-	i := iint - 1
+if err != nil {
+    http.Error(wr, "Invalid artist ID format", http.StatusBadRequest)
+    return
+}
+
+
 
 	// Load artist data
 	character, err := functions.LoadData("https://groupietrackers.herokuapp.com/api/artists")
@@ -261,6 +264,13 @@ func result(wr http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if iint < 1 || iint > len(character) {
+		http.Error(wr, fmt.Sprintf("Artist ID %d not found", iint), http.StatusNotFound)
+		return
+	}
+	
+	i := iint - 1
+	fmt.Println("iint:",iint)
 	if len(character) == 0 {
 		http.Error(wr, "No artist data available", http.StatusInternalServerError)
 		return
@@ -283,14 +293,34 @@ func result(wr http.ResponseWriter, r *http.Request) {
 	// }
 
 	var cdata []string
-	x := 1
+	var mapfinal []string
+
+	
 	d := ""
 	for location, date := range charData[i].DatesLocations {
 		d =  strings.ReplaceAll(string(strings.Title(location)), "-", ", ") + ": " + strings.Join(date, ", ")
 		d = strings.ReplaceAll(d, "_", " ")
 		cdata = append(cdata, d)
-		x++
+		loc := strings.Split(location,"-")
+		fmt.Println("loc:",loc)
+		city := strings.Title(strings.ReplaceAll(loc[0],"_"," "))
+		country := strings.Title(strings.ReplaceAll(loc[1],"_"," "))
+		mapData, err := functions.MapsApiResp(city, country)
+		fmt.Println("city:",city)
+		fmt.Println("country:",country)
+		if err != nil {
+			http.Error(wr, "Failed to load map data", http.StatusInternalServerError)
+			return
+		}
+		mapfinal = append(mapfinal,mapData.MapURL)
+		fmt.Println("mapfinal:",mapfinal)
+		if mapData.MapURL == "" {
+			http.Error(wr, "Failed to generate map URL", http.StatusInternalServerError)
+			return
+		}
+
 	}
+
 
 	FFinal := Final{
 		ID:        character[i].ID,
@@ -300,7 +330,9 @@ func result(wr http.ResponseWriter, r *http.Request) {
 		AlbumYear: character[i].AlbumYear,
 		Album1:    character[i].Album1,
 		Locations: cdata,
+		MapURL:    mapfinal, // Pass the generated MapURL
 	}
+fmt.Printf("%+v\n", FFinal)
 
 	MMember := []string{}
 	MMember = append(MMember, character[i].Members...)
@@ -331,7 +363,6 @@ func renderErrorPage(w http.ResponseWriter, code int) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	// Generate ASCII art for the error code with the "Standard" style
 
 	// Parse and render the custom 404 template
 	t, err := template.ParseFiles(fmt.Sprintf("style/%d.html", code))
